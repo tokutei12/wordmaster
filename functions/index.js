@@ -33,11 +33,28 @@ const QUESTION_CONTEXT = 'question';
 const QUESTION_PARAM = 'questionId';
 const ANSWER_PARAM = 'answer';
 
+const answerPossibilities = {
+    0: ['a', 'the first word', 'first word', 'the first one', 'first one', 'number one', 'one'],
+    1: ['b', 'the fourth word', 'fourth word', 'the fourth one', 'fourth one', 'number four', 'four'],
+    2: ['c', 'the fourth word', 'fourth word', 'the fourth one', 'fourth one', 'number four', 'four'],
+    3: ['d', 'the fourth word', 'fourth word', 'the fourth one', 'fourth one', 'number four', 'four'],
+};
+
 const beginnerQuestionBank = {
     0: {
-        question: 'Which of these words means \'cruel or inhumane treatment\'? A. Antagonist. B. Antonym. C. Aggressive. or D. Abuse.',
-        answer: ['d abuse', 'abuse', 'd', 'the fourth word', 'fourth word', 'the fourth one', 'fourth one', 'number four', 'four']
+        question: 'Which of these words means \'cruel or inhumane treatment\'?',
+        choices: ['Antagonist', 'Antonym', 'Aggressive', 'Abuse'],
+        answerPosition: 3,
     }
+}
+
+const formatAnswers = (choices) => {
+    const prefixes = ['A.', 'B.', 'C.', 'D.'];
+    let answerString = '';
+    for (let i = 0; i < prefixes.length; i++){
+        answerString += `${prefixes[i]} ${choices[i]}. `;
+    }
+    return answerString;
 }
 
 exports.assistantcodelab = functions.https.onRequest((request, response) => {
@@ -54,16 +71,34 @@ exports.assistantcodelab = functions.https.onRequest((request, response) => {
         const parameters = {};
         parameters[QUESTION_PARAM] = '0';
         assistant.setContext(QUESTION_CONTEXT, 2, parameters);
-        assistant.ask(beginnerQuestionBank[0].question);
+
+        const answerChoices = formatAnswers(beginnerQuestionBank[0].choices);
+        assistant.ask(`${beginnerQuestionBank[0].question} ${answerChoices}`);
     }
 
     function answerBeginner(assistant) {
-        const answer = assistant.getArgument(ANSWER_PARAM);
+        const user_answer = assistant.getArgument(ANSWER_PARAM).toLowerCase();
         const contexts = assistant.getContexts();
         //console.log(contexts);
         const priorQuestion = assistant.getContextArgument(QUESTION_CONTEXT, QUESTION_PARAM).value;
-        const correct_answer = beginnerQuestionBank[priorQuestion].answer;
-        assistant.ask(`You said: ${answer}. The question number was: ${priorQuestion}`);
+        const correct_answer_position = beginnerQuestionBank[priorQuestion].answerPosition;
+        const correct_answer = beginnerQuestionBank[priorQuestion].choices[correct_answer_position].toLowerCase();
+        const correct_possibilities = answerPossibilities[correct_answer_position].slice();
+
+        answerPossibilities[correct_answer_position].forEach((word) => {
+            correct_possibilities.push(`${word} ${correct_answer}`);
+        });
+        correct_possibilities.push(correct_answer);
+
+        console.log(correct_possibilities);
+        console.log(user_answer);
+
+        if (correct_possibilities.includes(user_answer)) {
+            assistant.ask('Great, that\'s correct!');
+            //set context
+        } else {
+            assistant.ask('Sorry, that\'s not quite right');
+        }
     }
 
 });
