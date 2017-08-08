@@ -25,7 +25,8 @@ admin.initializeApp(functions.config().firebase);
 //const dictionary = require('./dictionary');
 const beginnerDict = require('./beginnerDict')
 const intermediateDict = require('./intermediateDict')
-const dictionary = {"beginner": beginnerDict, "intermediate": intermediateDict}
+const advancedDict = require('./advancedDict')
+const dictionary = {"beginner": beginnerDict, "intermediate": intermediateDict, "advanced": advancedDict}
 //const beginner = admin.database().ref('/beginner');
 
 // API.AI Intent names
