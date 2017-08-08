@@ -22,7 +22,10 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
-const dictionary = require('./dictionary');
+//const dictionary = require('./dictionary');
+const beginnerDict = require('./beginnerDict')
+const intermediateDict = require('./intermediateDict')
+const dictionary = {"beginner": beginnerDict, "intermediate": intermediateDict}
 //const beginner = admin.database().ref('/beginner');
 
 // API.AI Intent names
@@ -63,7 +66,7 @@ const formatAnswers = (choices) => {
 }
 
 const generatePickWordQuestion = (level) => {
-    const levelDict = dictionary.dictionary[level];
+    const levelDict = dictionary[level];
     const dictKeys = Object.keys(levelDict);
     const numWords = dictKeys.length;
     const words = [];
