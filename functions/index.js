@@ -23,10 +23,14 @@ const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
 //const dictionary = require('./dictionary');
-const beginnerDict = require('./beginnerDict')
-const intermediateDict = require('./intermediateDict')
-const advancedDict = require('./advancedDict')
-const dictionary = {"beginner": beginnerDict, "intermediate": intermediateDict, "advanced": advancedDict}
+const beginnerDict = require('./beginnerDict');
+const intermediateDict = require('./intermediateDict');
+const advancedDict = require('./advancedDict');
+const dictionary = {
+    'beginner': beginnerDict, 
+    'intermediate': intermediateDict, 
+    'advanced': advancedDict
+};
 //const beginner = admin.database().ref('/beginner');
 
 // API.AI Intent names
@@ -44,8 +48,8 @@ const ANSWER_PARAM = 'answer';
 
 const answerPossibilities = {
     0: ['a', 'the first word', 'first word', 'the first one', 'first one', 'number one', 'one'],
-    1: ['b', 'the fourth word', 'fourth word', 'the fourth one', 'fourth one', 'number four', 'four'],
-    2: ['c', 'the fourth word', 'fourth word', 'the fourth one', 'fourth one', 'number four', 'four'],
+    1: ['b', 'the second word', 'second word', 'the second one', 'second one', 'number two', 'two'],
+    2: ['c', 'the third word', 'third word', 'the third one', 'third one', 'number three', 'three'],
     3: ['d', 'the fourth word', 'fourth word', 'the fourth one', 'fourth one', 'number four', 'four'],
 };
 
@@ -67,6 +71,7 @@ const formatAnswers = (choices) => {
 }
 
 const generatePickWordQuestion = (level) => {
+    console.log(dictionary);
     const levelDict = dictionary[level];
     const dictKeys = Object.keys(levelDict);
     const numWords = dictKeys.length;

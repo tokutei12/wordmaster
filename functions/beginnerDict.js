@@ -1,4 +1,4 @@
-"beginnerDict": {
+const beginnerDict = {
 	"Diligent": "Constant and earnest in effort and application",
 	"Whimsical": "Playful or out of the ordinary",
 	"Abnormal": "Different from what is normal or usual, typically in a way that is undesirable",

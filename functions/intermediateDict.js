@@ -1,4 +1,4 @@
-"intermediateDict" : {
+const intermediateDict = {
 	"consensus": "A collective or general agreement of opinion, feeling, or thinking",
 	"taint": "a stain or spot; a mark of corruption or dishonor; to stain or contaminate",
 	"hailed": "greeted",
