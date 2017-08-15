@@ -33,14 +33,25 @@ const dictionary = {
 };
 //const beginner = admin.database().ref('/beginner');
 
+const LEVEL_ENUM = {
+    beginner: 'beginner',
+    intermediate: 'intermediate',
+    advanced: 'advanced'
+};
+
 // API.AI Intent names
 const PLAY_BEGINNER_INTENT = 'playBeginner';
+const PLAY_INTERMEDIATE_INTENT = 'playIntermediate';
+const PLAY_ADVANCED_INTENT = 'playAdvanced';
 const ANSWER_INTENT = 'answer';
 const GIVE_UP_INTENT = 'giveUp';
 
 // Contexts
 const QUESTION_CONTEXT = 'question';
-const ANSWER_CONTEXT = 'answerQuestion'
+const ANSWER_CONTEXT = 'answer-question';
+const ANSWER_BEGINNER_CONTEXT = 'answer-beginner';
+const ANSWER_INTERMEDIATE_CONTEXT = 'answer-intermediate';
+const ANSWER_ADVANCED_CONTEXT = 'answer-advanced';
 
 // Context Parameters
 const QUESTION_PARAM = 'questionId';
@@ -80,7 +91,7 @@ const generatePickWordQuestion = (level) => {
         const randInt = Math.floor((Math.random() * numWords));
         console.log(randInt);
         words.push({
-            word: dictKeys[randInt],
+            word: dictKeys[randInt].toLowerCase(),
             definition: levelDict[dictKeys[randInt]]
         });
     }
@@ -103,17 +114,30 @@ exports.assistantcodelab = functions.https.onRequest((request, response) => {
 
    let actionMap = new Map();
    actionMap.set(PLAY_BEGINNER_INTENT, playBeginner);
+   actionMap.set(PLAY_INTERMEDIATE_INTENT, playIntermediate);
+   actionMap.set(PLAY_ADVANCED_INTENT, playAdvanced);
    actionMap.set(ANSWER_INTENT, answerQuestion);
    actionMap.set(GIVE_UP_INTENT, giveUpQuestion);
    assistant.handleRequest(actionMap);
 
-    function askQuestionBeginnerHelper() {
+    function askQuestionHelper(level) {
         const parameters = {};
-        const generatedQuestion = generatePickWordQuestion('beginner');
-        console.log(generatedQuestion);
+        const generatedQuestion = generatePickWordQuestion(level);
+
         parameters[QUESTION_PARAM] = generatedQuestion;
         assistant.setContext(QUESTION_CONTEXT, 1, parameters);
         assistant.setContext(ANSWER_CONTEXT, 1);
+
+        switch(level) {
+            case LEVEL_ENUM.beginner:
+                assistant.setContext(ANSWER_BEGINNER_CONTEXT, 1);
+                break;
+            case LEVEL_ENUM.intermediate:
+                assistant.setContext(ANSWER_INTERMEDIATE_CONTEXT, 1);
+                break;
+            default:
+                assistant.setContext(ANSWER_ADVANCED_CONTEXT, 1);
+        }
 
 
         const answerChoices = formatAnswers(generatedQuestion.choices);
@@ -121,14 +145,38 @@ exports.assistantcodelab = functions.https.onRequest((request, response) => {
     }
     
     function playBeginner(assistant) {
-        const question = askQuestionBeginnerHelper();
+        const question = askQuestionHelper(LEVEL_ENUM.beginner);
         assistant.ask(question);
+    }
+
+    function playIntermediate(assistant) {
+        const question = askQuestionHelper(LEVEL_ENUM.intermediate);
+        assistant.ask(question);
+    }
+
+    function playAdvanced(assistant) {
+        const question = askQuestionHelper(LEVEL_ENUM.advanced);
+        assistant.ask(question);
+    }
+
+    function askQuestionFromContextLevel(contexts) {
+        const contextNames = contexts.map((contextObject) => contextObject.name);
+        let newQuestion = null;
+
+        if (contextNames.includes(ANSWER_BEGINNER_CONTEXT)) {
+            newQuestion = askQuestionHelper(LEVEL_ENUM.beginner);
+        } else if (contextNames.includes(ANSWER_INTERMEDIATE_CONTEXT)) {
+            newQuestion = askQuestionHelper(LEVEL_ENUM.intermediate);
+        } else {
+            newQuestion = askQuestionHelper(LEVEL_ENUM.advanced);
+        }
+        return newQuestion;
     }
 
     function answerQuestion(assistant) {
         const user_answer = assistant.getArgument(ANSWER_PARAM).toLowerCase();
         const contexts = assistant.getContexts();
-        //console.log(contexts);
+
         const generatedQuestion = assistant.getContextArgument(QUESTION_CONTEXT, QUESTION_PARAM).value;
 
         const correct_answer_position = generatedQuestion.answerPosition;
@@ -141,17 +189,14 @@ exports.assistantcodelab = functions.https.onRequest((request, response) => {
         });
         correct_possibilities.push(correct_answer);
 
-        console.log(correct_possibilities);
-        console.log(user_answer);
+        const newQuestion = askQuestionFromContextLevel(contexts);
 
-        const newQuestion = askQuestionBeginnerHelper();
         if (correct_possibilities.includes(user_answer)) {
             assistant.ask(`Great, that's correct! Let's try a new question: ${newQuestion}`);
             //set context
         } else {
             assistant.ask(`Sorry, that's not quite right. The answer to that was ${correct_answer}. Here's a new question: ${newQuestion}`);
         }
-        playBeginner(assistant);
     }
 
     function giveUpQuestion(assistant) {
@@ -161,7 +206,7 @@ exports.assistantcodelab = functions.https.onRequest((request, response) => {
         const correct_answer_position = generatedQuestion.answerPosition;
         const correct_answer = generatedQuestion.choices[correct_answer_position].toLowerCase();
 
-        const newQuestion = askQuestionBeginnerHelper();
+        const newQuestion = askQuestionFromContextLevel(contexts);
         assistant.ask(`Ok then. The answer to that was ${correct_answer}. Try this one: ${newQuestion}`);
     }
 
